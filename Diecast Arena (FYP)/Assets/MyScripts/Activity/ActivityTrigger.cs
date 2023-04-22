@@ -7,8 +7,10 @@ using static GameMaster;
 public class ActivityTrigger : MonoBehaviour
 {
     GameMaster master;
+    PlayerNetwork network;
     InputManager input;
     UIManager UI;
+    ActivityOption activityOption;
     [HideInInspector] public GameObject activity;
     Material triggerMat;
     Canvas canvas;
@@ -26,8 +28,10 @@ public class ActivityTrigger : MonoBehaviour
     void Awake()
     {
         master = GameObject.FindWithTag("GameManager").GetComponent<GameMaster>();
+        network = master.ManagerObject(Manager.type.network).GetComponent<PlayerNetwork>();
         input = master.ManagerObject(Manager.type.input).GetComponent<InputManager>();
         UI = master.ManagerObject(Manager.type.UI).GetComponent<UIManager>();
+        activityOption = transform.parent.GetComponent<ActivityOption>();
         triggerMat = GetComponent<MeshRenderer>().material;
         canvas = Methods.GetChildContainsName(gameObject, "[Canvas]").GetComponent<Canvas>();
     }
@@ -55,7 +59,16 @@ public class ActivityTrigger : MonoBehaviour
         if (inTrigger && input.EnterActivity())
         {
             inTrigger = false;
-            master.EnterActivity(activityIndex);
+
+            int currentOption = 0;
+            if (master.activityList[activityIndex].type == activityType.RaceCircuit)
+                currentOption = activityOption.currentRaceLap;
+            if (master.activityList[activityIndex].type == activityType.CollectionBattle)
+                currentOption = activityOption.currentCollectDuration;
+            if (master.activityList[activityIndex].type == activityType.CarHunt)
+                currentOption = activityOption.currentHuntDuration;
+
+            network.EnterActivityServerRpc(activityIndex, currentOption);
         }
     }
 

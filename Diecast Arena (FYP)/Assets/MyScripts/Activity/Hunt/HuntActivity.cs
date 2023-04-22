@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 
 public class HuntActivity : MonoBehaviour
 {
     GameMaster master;
+    PlayerNetwork network;
     InputManager input;
     SoundManager sound;
     UIManager UI;
@@ -25,15 +27,18 @@ public class HuntActivity : MonoBehaviour
     public bool finished = false;
     float startTime = 0;
     public int point = 0;
+    float underSpeedTime;
     bool endCountdown = false;
 
     /* Tunables */
+    int minSpeed = 20;
     int pointLimit = 15;
     int pointRedLight = 3;
 
     void Awake()
     {
         master = GameObject.FindWithTag("GameManager").GetComponent<GameMaster>();
+        network = master.ManagerObject(Manager.type.network).GetComponent<PlayerNetwork>();
         input = master.ManagerObject(Manager.type.input).GetComponent<InputManager>();
         sound = master.ManagerObject(Manager.type.sound).GetComponent<SoundManager>();
         UI = master.ManagerObject(Manager.type.UI).GetComponent<UIManager>();
@@ -42,8 +47,8 @@ public class HuntActivity : MonoBehaviour
     void Start()
     {
         activityIndex = master.ActivityObjectToIndex(gameObject);
-        startPos = transform.Find("[Start Position]").position;
-        startRot = transform.Find("[Start Position]").rotation;
+        startPos = Methods.GetStartPosition(transform.Find("[Start Position]").gameObject, network.ownerPlayerId).transform.position;
+        startRot = Methods.GetStartPosition(transform.Find("[Start Position]").gameObject, network.ownerPlayerId).transform.rotation;
     }
 
     void Update()
@@ -53,11 +58,40 @@ public class HuntActivity : MonoBehaviour
             float remainingTime = duration - (Time.time - startTime);
             UI.UpdateHuntUI(pointLimit - point, remainingTime);
 
-            if (remainingTime <= 5 && !endCountdown)
+            if (master.playerSpeed < minSpeed)
             {
-                UI.ActivityCountdown5("Play");
-                sound.Play(Sound.name.Countdown5);
-                endCountdown = true;
+                if (!endCountdown)
+                {
+                    underSpeedTime = Time.time + 5.0f;
+                    UI.huntSpeedLimitTMP.enabled = true;
+                    UI.ActivityCountdown5("Play");
+                    sound.Play(Sound.name.Countdown5);
+                    endCountdown = true;
+                }
+                else
+                {
+                    if (Time.time >= underSpeedTime)
+                    {
+                        // Car Hunt finished (Busted)
+                        finished = true;
+                        master.FinishActivity(activityIndex);
+                        UI.ActivityCountdown5("Initial");
+                        UI.ActivityCountdown("BUSTED");
+                        UI.ResultHuntUI(activityIndex, point, false, 0, Time.time);
+                        sound.Play(Sound.name.GameLose);
+
+                        // In case it is during countdown when finishing
+                        UI.ActivityCountdown5("Initial");
+                        sound.Stop(Sound.name.Countdown5);
+                    }
+                }
+            }
+            else
+            {
+                UI.huntSpeedLimitTMP.enabled = false;
+                UI.ActivityCountdown5("Initial");
+                sound.Stop(Sound.name.Countdown5);
+                endCountdown = false;
             }
 
             if (remainingTime <= 0)
@@ -66,8 +100,13 @@ public class HuntActivity : MonoBehaviour
                 finished = true;
                 master.FinishActivity(activityIndex);
                 UI.ActivityCountdown5("Initial");
-                UI.ActivityCountdown("TIME'S UP");
-                UI.ResultHuntUI(activityIndex, point, false, 0, Time.time);
+                UI.ActivityCountdown("FINISH");
+                UI.ResultHuntUI(activityIndex, point, true, 0, Time.time);
+                sound.Play(Sound.name.CheckpointBold);
+
+                // In case it is during countdown when finishing
+                UI.ActivityCountdown5("Initial");
+                sound.Stop(Sound.name.Countdown5);
             }
         }
     }
@@ -85,6 +124,7 @@ public class HuntActivity : MonoBehaviour
         started = true;
         startTime = Time.time;
         input.EnableDrive();
+        UI.huntSpeedLimitTMP.enabled = true;
     }
 
     public void RecordPoint()
@@ -114,5 +154,6 @@ public class HuntActivity : MonoBehaviour
         startTime = 0;
         point = 0;
         endCountdown = false;
+        UI.huntSpeedLimitTMP.enabled = false;
     }
 }

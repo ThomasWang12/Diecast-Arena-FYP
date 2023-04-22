@@ -13,6 +13,7 @@ using System.Collections.Generic;
 public class CollectCheckpointCol : MonoBehaviour
 {
     GameMaster master;
+    PlayerNetwork network;
     Common common;
     CollectActivity collect;
 
@@ -51,11 +52,10 @@ public class CollectCheckpointCol : MonoBehaviour
     void Awake()
     {
         master = GameObject.FindWithTag("GameManager").GetComponent<GameMaster>();
+        network = master.ManagerObject(Manager.type.network).GetComponent<PlayerNetwork>();
         common = master.ManagerObject(Manager.type.common).GetComponent<Common>();
         collect = Methods.FindParentWithTagRecursive(gameObject, "Activity").GetComponent<CollectActivity>();
         checkpoint = transform.parent.gameObject;
-        //if (checkpoint.transform.parent.gameObject.name != "[Checkpoints]")
-            //checkpoint.transform.SetParent(collect.transform.Find("[Checkpoints]"));
         checkpointVisualMat = Methods.GetChildContainsName(checkpoint, "[Visual]").GetComponent<MeshRenderer>().material;
     }
 

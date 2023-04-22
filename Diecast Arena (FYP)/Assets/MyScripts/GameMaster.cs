@@ -11,10 +11,11 @@ using UnityEngine.UI;
 
 public class GameMaster : MonoBehaviour
 {
-    Common common;
+    PlayerNetwork network;
     InputManager input;
     SoundManager sound;
     UIManager UI;
+    Common common;
 
     [Header("Game State")]
     public gameState currentState;
@@ -40,6 +41,7 @@ public class GameMaster : MonoBehaviour
 
     [Header("Variables")]
     public Vector3 playerPos;
+    public int playerSpeed;
     public Vector3 camPos;
 
     [Header("Activities")]
@@ -70,10 +72,11 @@ public class GameMaster : MonoBehaviour
 
     void Awake()
     {
-        common = ManagerObject(Manager.type.common).GetComponent<Common>();
+        network = ManagerObject(Manager.type.network).GetComponent<PlayerNetwork>();
         input = ManagerObject(Manager.type.input).GetComponent<InputManager>();
         sound = ManagerObject(Manager.type.sound).GetComponent<SoundManager>();
         UI = ManagerObject(Manager.type.UI).GetComponent<UIManager>();
+        common = ManagerObject(Manager.type.common).GetComponent<Common>();
 
         // Get the trigger object for each activity
         for (int i = 0; i < activityList.Length; i++)
@@ -92,10 +95,11 @@ public class GameMaster : MonoBehaviour
     // Centralize the method of getting managers in scripts
     public GameObject ManagerObject(Manager.type type)
     {
-        if (type == Manager.type.common) return transform.Find("Common").gameObject;
+        if (type == Manager.type.network) return GameObject.Find("Player Network");
         if (type == Manager.type.input) return GameObject.Find("Input Manager");
         if (type == Manager.type.sound) return GameObject.Find("Sound Manager");
         if (type == Manager.type.UI) return GameObject.Find("UI Manager");
+        if (type == Manager.type.common) return transform.Find("Common").gameObject;
         return null;
     }
 
@@ -149,6 +153,7 @@ public class GameMaster : MonoBehaviour
             AvailableActivities();
 
         playerPos = player.transform.position;
+        playerSpeed = Int32.Parse(UI.speed.text);
         camPos = cam.transform.position;
     }
 
@@ -285,6 +290,7 @@ public class GameMaster : MonoBehaviour
             UI.ActivityResultUI(type, "Initial");
             UpdateGameState(gameState.Session);
             activeActivityIndex = -1;
+            network.activeActivityIndex = -1;
             UI.FadeBlack("In");
 
             #endregion
@@ -320,10 +326,15 @@ public class GameMaster : MonoBehaviour
             if (type == activityType.CarHunt)
                 activityList[index].mainObject.GetComponent<HuntActivity>().Reset();
 
+            // In case it is during countdown when exiting
+            UI.ActivityCountdown5("Initial");
+            sound.Stop(Sound.name.Countdown5);
+
             UI.ActivityUI(type, "Initial");
             UI.ActivityResultUI(type, "Initial");
             UpdateGameState(gameState.Session);
             activeActivityIndex = -1;
+            network.activeActivityIndex = -1;
             UI.FadeBlack("In");
 
             #endregion

@@ -11,6 +11,7 @@ using Random = UnityEngine.Random;
 public class CollectActivity : MonoBehaviour
 {
     GameMaster master;
+    PlayerNetwork network;
     InputManager input;
     SoundManager sound;
     UIManager UI;
@@ -18,7 +19,7 @@ public class CollectActivity : MonoBehaviour
     [HideInInspector] public CollectCheckpointDiamond diamondScript;
     public int duration = 60; // seconds
     [Tooltip("All checkpoints found inside the [Checkpoints] object.")]
-    [SerializeField] [HideInInspector] List<GameObject> checkpointsAll;
+    [SerializeField][HideInInspector] List<GameObject> checkpointsAll;
     [Tooltip("0 is regarded as include all checkpoints.")]
     public int totalCheckpoint = 0;
     public int totalDiamond = 0;
@@ -50,6 +51,7 @@ public class CollectActivity : MonoBehaviour
     void Awake()
     {
         master = GameObject.FindWithTag("GameManager").GetComponent<GameMaster>();
+        network = master.ManagerObject(Manager.type.network).GetComponent<PlayerNetwork>();
         input = master.ManagerObject(Manager.type.input).GetComponent<InputManager>();
         sound = master.ManagerObject(Manager.type.sound).GetComponent<SoundManager>();
         UI = master.ManagerObject(Manager.type.UI).GetComponent<UIManager>();
@@ -61,8 +63,8 @@ public class CollectActivity : MonoBehaviour
     void Start()
     {
         activityIndex = master.ActivityObjectToIndex(gameObject);
-        startPos = transform.Find("[Start Position]").position;
-        startRot = transform.Find("[Start Position]").rotation;
+        startPos = Methods.GetStartPosition(transform.Find("[Start Position]").gameObject, network.ownerPlayerId).transform.position;
+        startRot = Methods.GetStartPosition(transform.Find("[Start Position]").gameObject, network.ownerPlayerId).transform.rotation;
         InitializeCheckpoints();
         totalCheckpoint = Mathf.Clamp(totalCheckpoint, 0, checkpointsAll.Count);
         totalDiamond = Mathf.Clamp(totalDiamond, 0, totalCheckpoint);

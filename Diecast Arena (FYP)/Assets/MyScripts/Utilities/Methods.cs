@@ -91,7 +91,7 @@ public static class Methods
         float seconds = time3Decimal % 60;
         int minutes = Mathf.FloorToInt(time3Decimal / 60);
         float secondsUnit = (showDecimal) ? seconds : Mathf.Ceil(seconds);
-        string colon = (secondsUnit < 10) ? ":0" : ":";
+        string colon = (secondsUnit <= 10) ? ":0" : ":";
         string format = minutes + colon + seconds;
         string formatNoDecimal = minutes + colon + Mathf.FloorToInt(seconds);
         return (showDecimal) ? format : formatNoDecimal;
@@ -187,7 +187,22 @@ public static class Methods
         return 360 - angle;
     }
 
+    public static List<GameObject> GetAllObjectsInScene()
+    {
+        List<GameObject> objectsInScene = new List<GameObject>();
+
+        foreach (GameObject go in Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[])
+            objectsInScene.Add(go);
+
+        return objectsInScene;
+    }
+
     public static bool IsEmptyOrWhiteSpace(string value) => value.All(char.IsWhiteSpace);
+
+    public static GameObject[] FindAllPlayers()
+    {
+        return GameObject.FindGameObjectsWithTag("Player");
+    }
 
     public static GameObject FindOwnedPlayer()
     {
@@ -197,6 +212,19 @@ public static class Methods
             if (player.TryGetComponent<NetworkObject>(out var networkObject))
             {
                 if (networkObject.IsOwner) return player;
+            }
+        }
+        return null;
+    }
+
+    public static GameObject FindPlayerById(int id)
+    {
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var player in players)
+        {
+            if (player.TryGetComponent<NetworkObject>(out var networkObject))
+            {
+                if ((int)networkObject.OwnerClientId == id) return player;
             }
         }
         return null;
@@ -214,13 +242,9 @@ public static class Methods
         }
     }
 
-    public static List<GameObject> GetAllObjectsInScene()
+    public static GameObject GetStartPosition(GameObject parent, int ownerPlayerId)
     {
-        List<GameObject> objectsInScene = new List<GameObject>();
-
-        foreach (GameObject go in Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[])
-            objectsInScene.Add(go);
-
-        return objectsInScene;
+        string findName = "[Player " + ownerPlayerId + " Start Position]";
+        return parent.transform.Find(findName).gameObject;
     }
 }

@@ -49,7 +49,7 @@ public class InputManager : MonoBehaviour
         allowExitActivity = master.currentState.ToString().Contains("Activity") && !master.currentState.ToString().Contains("_");
         if (allowExitActivity)
         {
-            if (Input.GetKeyDown(KeyCode.Escape) || GamepadLeftButton())
+            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetButtonDown("Gamepad Select"))
                 master.ExitActivity(master.activeActivityIndex);
         }
 
@@ -165,7 +165,7 @@ public class InputManager : MonoBehaviour
     {
         if (!allowInput) return false;
 
-        if (Input.GetKeyDown(KeyCode.U)) return true;
+        if (Input.GetKeyDown(KeyCode.F2)) return true;
         return false;
     }
 
@@ -173,7 +173,7 @@ public class InputManager : MonoBehaviour
     {
         if (!allowInput) return false;
 
-        if (Input.GetKeyDown(KeyCode.E) || GamepadRightButton()) return true;
+        if (Input.GetKeyDown(KeyCode.E) || Input.GetButtonDown("Gamepad Fire3")) return true;
         return false;
     }
 

@@ -8,6 +8,7 @@ using static GameMaster;
 public class RaceActivity : MonoBehaviour
 {
     GameMaster master;
+    PlayerNetwork network;
     InputManager input;
     SoundManager sound;
     UIManager UI;
@@ -36,6 +37,7 @@ public class RaceActivity : MonoBehaviour
     void Awake()
     {
         master = GameObject.FindWithTag("GameManager").GetComponent<GameMaster>();
+        network = master.ManagerObject(Manager.type.network).GetComponent<PlayerNetwork>();
         input = master.ManagerObject(Manager.type.input).GetComponent<InputManager>();
         sound = master.ManagerObject(Manager.type.sound).GetComponent<SoundManager>();
         UI = master.ManagerObject(Manager.type.UI).GetComponent<UIManager>();
@@ -51,8 +53,10 @@ public class RaceActivity : MonoBehaviour
         if (activityType == activityType.RaceDestination)
         {
             totalLap = 0;
-            startPos = transform.Find("[Start Position]").position;
-            startRot = transform.Find("[Start Position]").rotation;
+
+            // Get the start position and rotation (Race Destination)
+            startPos = Methods.GetStartPosition(transform.Find("[Start Position]").gameObject, network.ownerPlayerId).transform.position;
+            startRot = Methods.GetStartPosition(transform.Find("[Start Position]").gameObject, network.ownerPlayerId).transform.rotation;
         }
         InitializeCheckpoints();
         totalCheckpoint = checkpoints.Count;
@@ -110,8 +114,10 @@ public class RaceActivity : MonoBehaviour
                 if (i == checkpoints.Count - 1)
                 {
                     checkpointCols[i].InitializeFlag(); // Spawn flag
-                    startPos = checkpoints[i].transform.position; // Get the start position
-                    startRot = checkpoints[i].transform.rotation; // Get the start rotation
+
+                    // Get the start position and rotation (Race Circuit)
+                    startPos = Methods.GetStartPosition(checkpoints[i], network.ownerPlayerId).transform.position;
+                    startRot = Methods.GetStartPosition(checkpoints[i], network.ownerPlayerId).transform.rotation;
                 }
             }
         }
